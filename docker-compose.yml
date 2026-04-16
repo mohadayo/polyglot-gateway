@@ -1,0 +1,49 @@
+services:
+  auth-service:
+    build:
+      context: ./services/auth-service
+    ports:
+      - "${AUTH_SERVICE_PORT:-8001}:8001"
+    environment:
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-key}
+      - TOKEN_EXPIRY_MINUTES=${TOKEN_EXPIRY_MINUTES:-60}
+      - AUTH_SERVICE_PORT=8001
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  rate-limiter:
+    build:
+      context: ./services/rate-limiter
+    ports:
+      - "${RATE_LIMITER_PORT:-8002}:8002"
+    environment:
+      - RATE_LIMITER_PORT=8002
+      - RATE_LIMIT=${RATE_LIMIT:-100}
+      - RATE_WINDOW_MS=${RATE_WINDOW_MS:-60000}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT:-8003}:8003"
+    environment:
+      - NOTIFICATION_SERVICE_PORT=8003
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
